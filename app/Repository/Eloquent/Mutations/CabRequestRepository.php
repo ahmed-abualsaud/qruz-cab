@@ -5,6 +5,7 @@ namespace App\Repository\Eloquent\Mutations;
 use App\Models\Driver;
 use App\Models\CabRequest;
 use Illuminate\Support\Arr;
+use App\Events\AcceptCabRequest;
 use App\Jobs\SendPushNotification;
 use App\Exceptions\CustomException;
 use App\Traits\HandleUserAttributes;
@@ -60,6 +61,9 @@ class CabRequestRepository extends BaseRepository implements CabRequestRepositor
             __('lang.accept_request'),
             ['view' => 'AcceptRequest', 'request_id' => $request->id]
         );
+
+        broadcast(new AcceptCabRequest($driversIds));
+        
         return $request;
     }
 
