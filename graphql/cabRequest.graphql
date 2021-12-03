@@ -1,6 +1,7 @@
 input CabRequestInput {
     id: ID
     user_id: ID
+    user_name: String
     driver_id: ID
     vehicle_id: ID
     cancelled_by: String
@@ -18,6 +19,7 @@ type CabRequest {
     id: ID
     user_id: ID
     driver_id: ID
+    drivers_ids: [ID]
     vehicle_id: ID
     status: String
     payment_method: String

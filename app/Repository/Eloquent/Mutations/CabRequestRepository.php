@@ -4,15 +4,26 @@ namespace App\Repository\Eloquent\Mutations;
 
 use App\Models\Driver;
 use App\Models\CabRequest;
-use Illuminate\Support\Arr;
+
+use App\Events\RideEnded;
+use App\Events\RideStarted;
+use App\Events\DriverArrived;
 use App\Events\AcceptCabRequest;
+use App\Events\CabRequestAccepted;
+use App\Events\CabRequestCancelled;
+
 use App\Jobs\SendPushNotification;
 use App\Exceptions\CustomException;
+
 use App\Traits\HandleUserAttributes;
 use App\Traits\HandleDriverAttributes;
+
 use App\Repository\Eloquent\BaseRepository;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Repository\Mutations\CabRequestRepositoryInterface;
+
+use Illuminate\Support\Arr;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+
 
 class CabRequestRepository extends BaseRepository implements CabRequestRepositoryInterface
 {
@@ -30,7 +41,7 @@ class CabRequestRepository extends BaseRepository implements CabRequestRepositor
 
     public function search(array $args)
     {
-        $input = Arr::except($args, ['directive']);
+        $input = Arr::except($args, ['directive', 'user_name']);
         $activeRequests = $this->model->wherePending($args['user_id'])->first();
 
         if($activeRequests) {
@@ -62,8 +73,12 @@ class CabRequestRepository extends BaseRepository implements CabRequestRepositor
             ['view' => 'AcceptRequest', 'request_id' => $request->id]
         );
 
-        broadcast(new AcceptCabRequest($driversIds));
+        $user['id'] = $args['user_id'];
+        $user['name'] = $args['user_name'];
+
+        broadcast(new AcceptCabRequest($driversIds, $user));
         
+        $request['drivers_ids'] = $driversIds;
         return $request;
     }
 
@@ -94,6 +109,8 @@ class CabRequestRepository extends BaseRepository implements CabRequestRepositor
             ['view' => 'RequestAccepted', 'request_id' => $request->id]
         );
 
+        broadcast(new CabRequestAccepted($request->user_id, $args['driver_id']));
+
         return $request;
     }
 
@@ -114,7 +131,17 @@ class CabRequestRepository extends BaseRepository implements CabRequestRepositor
         $args['history'] = array_merge($request->history, $payload);
         $args['status'] = 'ARRIVED';
 
-        return $this->updateRequest($request, $args);
+        $request = $this->updateRequest($request, $args);
+
+        SendPushNotification::dispatch(
+            $this->driverToken($request->driver_id),
+            __('lang.start_ride'),
+            ['view' => 'StartRide', 'request_id' => $request->id]
+        );
+
+        broadcast(new DriverArrived($request->driver_id, $request->user_id));
+
+        return $request;
     }
 
     public function start(array $args)
@@ -134,7 +161,17 @@ class CabRequestRepository extends BaseRepository implements CabRequestRepositor
         $args['history'] = array_merge($request->history, $payload);
         $args['status'] = 'STARTED';
 
-        return $this->updateRequest($request, $args);
+        $request = $this->updateRequest($request, $args);
+
+        SendPushNotification::dispatch(
+            $this->userToken($request->user_id),
+            __('lang.ride_started'),
+            ['view' => 'RideStarted', 'request_id' => $request->id]
+        );
+
+        broadcast(new RideStarted($request->user_id, $request->driver_id));
+
+        return $request;
     }
 
     public function end(array $args)
@@ -154,7 +191,17 @@ class CabRequestRepository extends BaseRepository implements CabRequestRepositor
         $args['history'] = array_merge($request->history, $payload);
         $args['status'] = 'COMPLETED';
 
-        return $this->updateRequest($request, $args);
+        $request = $this->updateRequest($request, $args);
+
+        SendPushNotification::dispatch(
+            $this->userToken($request->user_id),
+            __('lang.ride_ended'),
+            ['view' => 'RideEnded', 'request_id' => $request->id]
+        );
+
+        broadcast(new RideEnded($request->user_id, $request->driver_id));
+
+        return $request;
     }
 
     public function cancel(array $args)
@@ -179,19 +226,35 @@ class CabRequestRepository extends BaseRepository implements CabRequestRepositor
         $request = $this->updateRequest($request, $args);
 
         if ( strtolower($args['cancelled_by']) == 'user') {
+
             SendPushNotification::dispatch(
                 $this->driverToken($request->user_id),
                 __('lang.request_cancelled'),
                 ['view' => 'CancelRequest', 'request_id' => $request->id]
             );
+
+            $data['request_id'] = $request->id;
+            $data['user_id'] = $request->user_id;
+            $data['driver_id'] = $request->driver_id;
+            $data['cancel_reason'] = array_key_exists('cancel_reason', $args) ? $args['cancel_reason'] : "Unknown";
+
+            broadcast(new CabRequestCancelled('user', $data));
         }
 
         if ( strtolower($args['cancelled_by']) == 'driver') {
+
             SendPushNotification::dispatch(
                 $this->userToken($request->user_id),
                 __('lang.request_cancelled'),
                 ['view' => 'CancelRequest', 'request_id' => $request->id]
             );
+
+            $data['request_id'] = $request->id;
+            $data['user_id'] = $request->user_id;
+            $data['driver_id'] = $request->driver_id;
+            $data['cancel_reason'] = array_key_exists('cancel_reason', $args) ? $args['cancel_reason'] : "Unknown";
+
+            broadcast(new CabRequestCancelled('driver', $data));        
         }
 
         return $request;

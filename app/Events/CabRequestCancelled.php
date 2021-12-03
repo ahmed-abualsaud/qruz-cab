@@ -10,21 +10,22 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class AcceptCabRequest implements ShouldBroadcast
+class CabRequestCancelled implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $driversIds;
-    public $user;
+    public $by;
+    public $data;
+
     /**
      * Create a new event instance.
      *
      * @return void
      */
-    public function __construct(array $driversIds, $user)
+    public function __construct($by, $data)
     {
-        $this->driversIds = $driversIds;
-        $this->user = $user;
+        $this->by = $by;
+        $this->data = $data;
     }
 
     /**
@@ -34,11 +35,15 @@ class AcceptCabRequest implements ShouldBroadcast
      */
     public function broadcastOn()
     {
-        foreach ($this->driversIds as $driverId) {
-            $channels[] = new Channel('Request.Accept.Driver.'.$driverId);  
+        if ( $this->by == 'user' ) {
+            return new PrivateChannel('Request.Cancelled.Driver.'.$this->data['driver_id']);
         }
 
-        return $channels;
+        if ( $this->by == 'driver' ) {
+            return new PrivateChannel('Request.Cancelled.User.'.$this->data['user_id']);
+        }
+
+        return null;
     }
 
     /**
@@ -48,7 +53,7 @@ class AcceptCabRequest implements ShouldBroadcast
      */
     public function broadcastAs()
     {
-        return 'accept.request';
+        return 'request.cancelled';
     }
 
     /**
@@ -58,7 +63,6 @@ class AcceptCabRequest implements ShouldBroadcast
      */
     public function broadcastWith()
     {
-        return $this->user;
+        return $this->data;
     }
-
 }
