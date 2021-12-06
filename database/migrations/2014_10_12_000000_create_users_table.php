@@ -24,16 +24,11 @@ class CreateUsersTable extends Migration
             $table->string('secondary_no')->nullable();
             $table->string('title')->nullable();
             $table->string('avatar')->nullable();
-            $table->unsignedBigInteger('partner_id')->nullable();
-            $table->unsignedBigInteger('referrer_id')->nullable();
             $table->enum('payment_method', ['CASH', 'CARD', 'FAWRY'])->nullable();
             $table->double('latitude', 15, 8)->nullable();
             $table->double('longitude',15,8)->nullable();
             $table->float('wallet_balance')->default(0);
             $table->decimal('rating', 4, 2)->default(5);
-            $table->string('provider')->nullable();
-            $table->string('provider_id')->nullable();
-            $table->string('ref_code')->nullable();
             $table->string('device_id')->nullable();
             $table->timestamps();
         });

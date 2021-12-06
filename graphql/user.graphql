@@ -1,0 +1,37 @@
+input CreateUserInput {
+  name: String! @rules(apply: ["required"])
+  email: String @rules(apply: ["email", "unique:users,email"])
+  phone: String @rules(apply: ["unique:users,phone"])
+  password: String
+  title: String
+  avatar: Upload
+  platform: String @rules(apply: ["in:android,ios"])
+  device_id: String
+}
+
+type UserPayload {
+  access_token: String
+  user: User
+}
+
+type User {
+  id: ID
+  name: String
+  email: String
+  phone: String
+  emergency_no: String
+  secondary_no: String
+  avatar: String
+  title: String
+  payment_method: String
+  latitude: Float
+  longitude: Float
+  wallet_balance: Float
+  insurance_balance: Float
+  rating: Float
+  ref_code: String
+  created_at: String
+  updated_at: String
+  device_id: String
+  phone_verified_at: String
+}

@@ -1,0 +1,38 @@
+input CreateDriverInput {
+  name: String! @rules(apply: ["required"])
+  name_ar: String
+  email: String @rules(apply: ["email", "unique:drivers,email"])
+  phone: String @rules(apply: ["unique:drivers,phone"])
+  password: String
+  license_expires_on: String
+  avatar: Upload
+  city: String
+  vehicle: ID
+  status: Boolean
+  code: String
+}
+
+type DriverAuthPayload {
+  access_token: String
+  driver: Driver
+}
+
+type Driver {
+  id: ID
+  name: String
+  name_ar: String
+  email: String
+  phone: String
+  license_expires_on: String
+  avatar: String
+  latitude: Float
+  longitude: Float
+  rating: Float
+  status: Boolean
+  city: String
+  vehicle: String
+  code: String
+  created_at: String
+  updated_at: String
+  vehicles: [Vehicle] @hasMany
+}

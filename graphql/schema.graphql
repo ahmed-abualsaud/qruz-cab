@@ -1,37 +1,56 @@
-"A date string with format `Y-m-d`, e.g. `2011-05-23`."
-scalar Date @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Date")
+scalar Upload @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Upload")
 
-"A datetime string with format `Y-m-d H:i:s`, e.g. `2018-05-23 13:43:32`."
-scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
+# -- QUERIES --
 
 type Query {
-    users: [User!]! @paginate(defaultCount: 10)
-    user(id: ID @eq): User @find
+  
 }
 
+# -- MUTATIONS --
 
 type Mutation {
+  # User Auth
+  createUser(input: CreateUserInput! @spread): UserPayload!
+    @field(resolver: "UserResolver@create")
+  userLogin(input: LoginInput! @spread): UserPayload! 
+    @field(resolver: "UserResolver@login")
+
+  # Driver Auth
+  createDriver(input: CreateDriverInput! @spread): Driver 
+    @field(resolver: "DriverResolver@create")
+  driverLogin(input: LoginInput! @spread): DriverAuthPayload! 
+    @field(resolver: "DriverResolver@login")
+}
+
+# User Guard
+extend type Mutation @guard(with: ["user"]) {
   # Cab Request
   searchCabRequest(input: CabRequestInput! @spread): CabRequest
     @field(resolver: "CabRequestResolver@search")
-  acceptCabRequest(input: CabRequestInput! @spread): CabRequest
-    @field(resolver: "CabRequestResolver@accept")
   arrivedCabRequest(input: CabRequestInput! @spread): CabRequest
     @field(resolver: "CabRequestResolver@arrived")
+}
+
+# Driver Guard
+extend type Mutation @guard(with: ["driver"]) {
+  # Cab Request
+  acceptCabRequest(input: CabRequestInput! @spread): CabRequest
+    @field(resolver: "CabRequestResolver@accept")
   startCabRequest(input: CabRequestInput! @spread): CabRequest
     @field(resolver: "CabRequestResolver@start")
   endCabRequest(input: CabRequestInput! @spread): CabRequest
     @field(resolver: "CabRequestResolver@end")
+}
+
+# User|Driver Guard
+extend type Mutation @guard(with: ["user", "driver"]) {
+  # Cab Request
   cancelCabRequest(input: CabRequestInput! @spread): CabRequest
     @field(resolver: "CabRequestResolver@cancel")
 }
 
-type User {
-    id: ID!
-    name: String!
-    email: String!
-    created_at: DateTime!
-    updated_at: DateTime!
-}
-
+#import auth.graphql
 #import cabRequest.graphql
+#import driver.graphql
+#import user.graphql
+#import vehicle.graphql

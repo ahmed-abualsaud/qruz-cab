@@ -35,7 +35,7 @@ class AcceptCabRequest implements ShouldBroadcast
     public function broadcastOn()
     {
         foreach ($this->driversIds as $driverId) {
-            $channels[] = new Channel('Request.Accept.Driver.'.$driverId);  
+            $channels[] = new PrivateChannel('Request.Accept.Driver.'.$driverId);  
         }
 
         return $channels;

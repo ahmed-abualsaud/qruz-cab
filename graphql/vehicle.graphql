@@ -1,0 +1,11 @@
+type Vehicle {
+  id: ID
+  license_plate: String
+  license_expires_on: String
+  year: Int
+  seats: Int
+  photo: String
+  terminal_id: ID
+  device_id: ID
+  code: String
+}
