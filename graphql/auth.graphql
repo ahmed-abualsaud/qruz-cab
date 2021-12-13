@@ -4,3 +4,10 @@ input LoginInput {
   platform: String @rules(apply: ["in:android,ios"])
   device_id: String
 }
+
+input SocialLoginInput {
+  provider: String! @rules(apply: ["required", "in:facebook,google,apple"])
+  token: String! @rules(apply: ["required"])
+  platform: String @rules(apply: ["in:android,ios"])
+  device_id: String
+}

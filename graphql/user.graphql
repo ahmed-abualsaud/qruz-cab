@@ -1,7 +1,7 @@
 input CreateUserInput {
   name: String! @rules(apply: ["required"])
-  email: String @rules(apply: ["email", "unique:users,email"])
-  phone: String @rules(apply: ["unique:users,phone"])
+  email: String @rules(apply: ["email", "unique:qruz_mysql.users,email"])
+  phone: String @rules(apply: ["unique:qruz_mysql.users,phone"])
   password: String
   title: String
   avatar: Upload

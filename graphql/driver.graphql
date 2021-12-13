@@ -1,17 +1,3 @@
-input CreateDriverInput {
-  name: String! @rules(apply: ["required"])
-  name_ar: String
-  email: String @rules(apply: ["email", "unique:drivers,email"])
-  phone: String @rules(apply: ["unique:drivers,phone"])
-  password: String
-  license_expires_on: String
-  avatar: Upload
-  city: String
-  vehicle: ID
-  status: Boolean
-  code: String
-}
-
 type DriverAuthPayload {
   access_token: String
   driver: Driver

@@ -15,6 +15,7 @@ use App\Events\CabRequestCancelled;
 use App\Jobs\SendPushNotification;
 use App\Exceptions\CustomException;
 
+use App\Traits\HandleAuthToken;
 use App\Traits\HandleUserAttributes;
 use App\Traits\HandleDriverAttributes;
 
@@ -27,7 +28,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class CabRequestRepository extends BaseRepository implements CabRequestRepositoryInterface
 {
-    use HandleUserAttributes, HandleDriverAttributes;
+    use HandleAuthToken, HandleUserAttributes, HandleDriverAttributes;
 
     /**
     * CabRequest constructor.
@@ -41,6 +42,7 @@ class CabRequestRepository extends BaseRepository implements CabRequestRepositor
 
     public function search(array $args)
     {
+        return app('request');
         $input = Arr::except($args, ['directive', 'user_name']);
         $activeRequests = $this->model->wherePending($args['user_id'])->first();
 
@@ -193,6 +195,8 @@ class CabRequestRepository extends BaseRepository implements CabRequestRepositor
 
         $request = $this->updateRequest($request, $args);
 
+        $this->updateDriverStatus($request->driver_id ,'ONLINE');
+
         SendPushNotification::dispatch(
             $this->userToken($request->user_id),
             __('lang.ride_ended'),
@@ -224,6 +228,8 @@ class CabRequestRepository extends BaseRepository implements CabRequestRepositor
         $args['status'] = 'CANCELLED';
 
         $request = $this->updateRequest($request, $args);
+
+        $this->updateDriverStatus($request->driver_id ,'ONLINE');
 
         if ( strtolower($args['cancelled_by']) == 'user') {
 

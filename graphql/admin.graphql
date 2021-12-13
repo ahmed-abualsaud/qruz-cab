@@ -1,0 +1,24 @@
+input UpdateAdminInput @validator {
+  id: ID
+  role_id: ID
+  name: String
+  email: String
+  phone: String
+  avatar: Upload
+}
+
+type AdminAuthPayload {
+  access_token: String
+  admin: Admin
+}
+
+type Admin {
+  id: ID
+  name: String
+  email: String
+  phone: String
+  avatar: String
+  employee_id: String
+  status: String
+  is_super_admin: Boolean
+}

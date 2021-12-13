@@ -2,28 +2,27 @@
 
 namespace App\Traits;
 
-use App\Models\Driver;
+use Illuminate\Support\Facades\Http;
 
 trait HandleDriverAttributes
 {
     protected function updateDriverStatus($driver_id, $status)
     {
-        Driver::where('id', $driver_id)->update(['status' => $status]);
+        $response = Http::post('http://localhost:8000/rest/driver/update', [
+            'id' => $driver_id,
+            'cab_status' => $status
+        ])->throw();
     }
 
     protected function driverToken($driver_id)
     {
-        return Driver::select('id', 'device_id')
-            ->where('id', $driver_id)
-            ->pluck('device_id')
-            ->toArray();
+        return Http::get('http://localhost:8000/rest/driver/'.$driver_id.'/device/id')->throw();
     }
 
     protected function driversToken(array $drivers_ids)
     {
-        return Driver::select('id', 'device_id')
-            ->whereIn('id', $drivers_ids)
-            ->pluck('device_id')
-            ->toArray();
+        $response = Http::get('http://localhost:8000/rest/drivers/device/id', [
+            'drivers_ids' => $drivers_ids,
+        ])->throw();
     }
 }

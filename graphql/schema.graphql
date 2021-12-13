@@ -3,27 +3,32 @@ scalar Upload @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Upload
 # -- QUERIES --
 
 type Query {
-  
+    cabRequests: [CabRequest!]! @paginate(defaultCount: 10)
+    cabRequest(id: ID @eq): CabRequest @find
 }
 
 # -- MUTATIONS --
 
 type Mutation {
+  # Admin Auth
+  adminLogin(input: LoginInput! @spread): AdminAuthPayload! 
+    @field(resolver: "AdminResolver@login")
+
   # User Auth
   createUser(input: CreateUserInput! @spread): UserPayload!
     @field(resolver: "UserResolver@create")
   userLogin(input: LoginInput! @spread): UserPayload! 
     @field(resolver: "UserResolver@login")
+  userSocialLogin(input: SocialLoginInput! @spread): UserPayload! 
+    @field(resolver: "UserResolver@socialLogin")
 
   # Driver Auth
-  createDriver(input: CreateDriverInput! @spread): Driver 
-    @field(resolver: "DriverResolver@create")
   driverLogin(input: LoginInput! @spread): DriverAuthPayload! 
     @field(resolver: "DriverResolver@login")
 }
 
 # User Guard
-extend type Mutation @guard(with: ["user"]) {
+extend type Mutation @guard(with: ["admin", "user"]) {
   # Cab Request
   searchCabRequest(input: CabRequestInput! @spread): CabRequest
     @field(resolver: "CabRequestResolver@search")
@@ -32,7 +37,7 @@ extend type Mutation @guard(with: ["user"]) {
 }
 
 # Driver Guard
-extend type Mutation @guard(with: ["driver"]) {
+extend type Mutation @guard(with: ["admin", "driver"]) {
   # Cab Request
   acceptCabRequest(input: CabRequestInput! @spread): CabRequest
     @field(resolver: "CabRequestResolver@accept")
@@ -43,12 +48,13 @@ extend type Mutation @guard(with: ["driver"]) {
 }
 
 # User|Driver Guard
-extend type Mutation @guard(with: ["user", "driver"]) {
+extend type Mutation @guard(with: ["admin", "user", "driver"]) {
   # Cab Request
   cancelCabRequest(input: CabRequestInput! @spread): CabRequest
     @field(resolver: "CabRequestResolver@cancel")
 }
 
+#import admin.graphql
 #import auth.graphql
 #import cabRequest.graphql
 #import driver.graphql

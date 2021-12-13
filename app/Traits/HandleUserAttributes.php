@@ -2,16 +2,12 @@
 
 namespace App\Traits;
 
-use App\Models\User;
+use Illuminate\Support\Facades\Http;
 
 trait HandleUserAttributes
 {
-
-    protected function userToken($id)
+    protected function userToken($user_id)
     {
-        return User::select('id', 'device_id')
-            ->where('id', $id)
-            ->pluck('device_id')
-            ->toArray();
+        return Http::get('http://localhost:8000/rest/user/'.$user_id.'/device/id')->throw();
     }
 }
